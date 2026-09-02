@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TRIP BUDDY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16302E;
+    --paper:#F6EFE3;
+    --paper-2:#EFE6D4;
+    --coral:#FF6152;
+    --coral-dark:#E1493C;
+    --teal:#0F7A73;
+    --teal-light:#E4F1EE;
+    --line:#DACCAE;
+    --muted:#7C7364;
+    --white:#FFFDF8;
+    --danger:#C0392B;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper-2);
+    font-family:'Inter',system-ui,sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  #app{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--paper);
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 0 40px rgba(22,48,46,0.08);
+  }
+  h1,h2,h3{font-family:'Fraunces',serif;margin:0;line-height:1.15;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  button{font-family:inherit;cursor:pointer;}
+  input,textarea,select{font-family:inherit;}
+
+  /* ---- App bar ---- */
+  .appbar{
+    padding:18px 20px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border-bottom:1px solid var(--line);
+    background:var(--paper);
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  .appbar .back{
+    background:none;border:none;font-size:20px;color:var(--ink);
+    width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+    border-radius:50%;
+  }
+  .appbar .back:active{background:var(--paper-2);}
+  .appbar h2{font-size:19px;font-weight:600;flex:1;}
+  .appbar .sub{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  .screen{flex:1;display:flex;flex-direction:column;padding-bottom:24px;}
+  .content{padding:20px;}
+
+  /* ---- Buttons ---- */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:14px 20px;border-radius:14px;border:none;
+    font-size:15px;font-weight:600;
+    width:100%;
+  }
+  .btn-primary{background:var(--coral);color:#fff;}
+  .btn-primary:active{background:var(--coral-dark);}
+  .btn-secondary{background:var(--teal-light);color:var(--teal);}
+  .btn-outline{background:transparent;color:var(--ink);border:1.5px solid var(--line);}
+  .btn-ghost{background:none;color:var(--teal);padding:8px 4px;width:auto;font-weight:600;font-size:14px;}
+  .btn:disabled{opacity:0.5;}
+  .btn-sm{padding:9px 14px;font-size:13px;width:auto;border-radius:10px;}
+
+  /* ---- Inputs ---- */
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+  .field input, .field textarea, .field select{
+    width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;
+    font-size:15px;background:var(--white);color:var(--ink);
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{outline:2px solid var(--teal);outline-offset:1px;}
+  .field-row{display:flex;gap:10px;}
+  .field-row .field{flex:1;}
+
+  /* ---- Loading ---- */
+  .loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--muted);gap:14px;}
+  .spinner{width:28px;height:28px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--coral);animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---- Empty state ---- */
+  .empty{padding:50px 24px;text-align:center;color:var(--muted);}
+  .empty h3{color:var(--ink);font-size:18px;margin-bottom:8px;}
+  .empty p{font-size:14px;line-height:1.6;margin:0 0 18px;}
+
+  /* ---- Ticket-stub trip card ---- */
+  .ticket{
+    position:relative;
+    background:var(--white);
+    border:1.5px solid var(--line);
+    border-radius:16px;
+    margin-bottom:18px;
+    overflow:visible;
+  }
+  .ticket-main{padding:18px 18px 14px;}
+  .ticket-dest{font-size:11px;letter-spacing:0.02em;color:var(--teal);font-weight:600;margin-bottom:4px;}
+  .ticket-name{font-size:20px;font-weight:600;margin-bottom:10px;}
+  .ticket-dates{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);}
+  .ticket-perf{
+    position:relative;
+    height:1px;border-top:2px dashed var(--line);
+    margin:0 0;
+  }
+  .ticket-perf::before, .ticket-perf::after{
+    content:'';position:absolute;top:-9px;width:18px;height:18px;border-radius:50%;
+    background:var(--paper-2);
+  }
+  .ticket-perf::before{left:-9px;}
+  .ticket-perf::after{right:-9px;}
+  .ticket-foot{padding:12px 18px 16px;display:flex;justify-content:space-between;align-items:center;}
+  .ticket-foot .members{font-size:12px;color:var(--muted);}
+  .ticket-foot .spend{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;}
+
+  .fab-row{padding:0 20px 8px;}
+
+  /* ---- Tabs ---- */
+  .tabs{display:flex;gap:2px;padding:0 14px;border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:73px;z-index:9;overflow-x:auto;}
+  .tab{padding:12px 14px;font-size:14px;font-weight:600;color:var(--muted);background:none;border:none;white-space:nowrap;border-bottom:2.5px solid transparent;}
+  .tab.active{color:var(--coral);border-bottom-color:var(--coral);}
+
+  /* ---- Cards ---- */
+  .card{background:var(--white);border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;}
+  .row-between{display:flex;justify-content:space-between;align-items:center;}
+
+  /* Spot card */
+  .spot-card{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .spot-name{font-weight:600;font-size:15px;}
+  .spot-meta{font-size:12px;color:var(--muted);margin-top:3px;}
+  .spot-cat{display:inline-block;background:var(--teal-light);color:var(--teal);font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;margin-top:6px;}
+  .vote-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;min-width:44px;}
+  .vote-heart{font-size:22px;line-height:1;}
+  .vote-count{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);font-weight:600;}
+  .vote-btn.voted .vote-heart{filter:none;}
+
+  /* priority chips */
+  .chip-row{display:flex;gap:6px;margin-top:8px;}
+  .chip{font-size:11px;padding:5px 10px;border-radius:20px;border:1.5px solid var(--line);color:var(--muted);font-weight:600;}
+  .chip.must{background:#FFEAE7;border-color:var(--coral);color:var(--coral-dark);}
+  .chip.want{background:var(--teal-light);border-color:var(--teal);color:var(--teal);}
+  .chip.no{background:#EFE6D4;color:var(--muted);}
+
+  /* wish item */
+  .wish-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);}
+  .wish-item:last-child{border-bottom:none;}
+  .wish-text{font-size:14px;}
+  .wish-by{font-size:11px;color:var(--muted);margin-top:3px;}
+
+  /* Member list */
+  .member-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);}
+  .member-row:last-child{border-bottom:none;}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;}
+  .member-name{font-weight:600;font-size:14px;}
+  .member-role{font-size:11px;color:var(--muted);}
+  .member-money{margin-left:auto;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;}
+  .money-plus{color:var(--teal);}
+  .money-minus{color:var(--coral-dark);}
+
+  /* Timeline */
+  .day-tabs{display:flex;gap:8px;overflow-x:auto;padding:14px 20px 4px;}
+  .day-chip{flex-shrink:0;padding:8px 14px;border-radius:20px;border:1.5px solid var(--line);background:var(--white);font-size:13px;font-weight:600;font-family:'IBM Plex Mono',monospace;}
+  .day-chip.active{background:var(--ink);border-color:var(--ink);color:var(--white);}
+  .timeline{padding:16px 20px 20px;}
+  .tl-item{display:flex;gap:14px;position:relative;padding-bottom:22px;}
+  .tl-item:last-child{padding-bottom:0;}
+  .tl-item::before{
+    content:'';position:absolute;left:29px;top:26px;bottom:0;width:1.5px;background:var(--line);
+  }
+  .tl-item:last-child::before{display:none;}
+  .tl-time{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;width:44px;flex-shrink:0;padding-top:3px;}
+  .tl-dot{width:12px;height:12px;border-radius:50%;background:var(--coral);flex-shrink:0;margin-top:6px;position:relative;z-index:1;box-shadow:0 0 0 4px var(--paper);}
+  .tl-body{flex:1;padding-bottom:2px;}
+  .tl-title{font-weight:600;font-size:14.5px;}
+  .tl-memo{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5;}
+  .tl-edit{font-size:11px;color:var(--teal);font-weight:600;background:none;border:none;padding:6px 0 0;}
+
+  /* Money summary */
+  .money-summary{display:flex;gap:10px;padding:0 20px 4px;}
+  .money-box{flex:1;background:var(--white);border:1.5px solid var(--line);border-radius:14px;padding:14px;}
+  .money-box .label{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;}
+  .money-box .val{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:700;}
+
+  .expense-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);}
+  .expense-row:last-child{border-bottom:none;}
+  .expense-cat{font-size:20px;width:32px;text-align:center;}
+  .expense-title{font-weight:600;font-size:14px;}
+  .expense-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .expense-amt{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;}
+
+  .settle-row{display:flex;align-items:center;gap:10px;padding:14px 0;border-bottom:1px solid var(--line);}
+  .settle-row:last-child{border-bottom:none;}
+  .settle-arrow{color:var(--muted);}
+  .settle-amt{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-weight:700;}
+
+  /* FAB */
+  .fab{
+    position:fixed;bottom:24px;left:50%;transform:translateX(calc(-50% + 200px));
+    background:var(--coral);color:#fff;border:none;border-radius:16px;
+    width:56px;height:56px;font-size:26px;box-shadow:0 8px 20px rgba(255,97,82,0.4);
+    display:flex;align-items:center;justify-content:center;
+    z-index:20;
+  }
+  @media (max-width:480px){
+    .fab{transform:translateX(calc(-50% + 46vw));}
+  }
+
+  /* Modal / sheet */
+  .sheet-backdrop{position:fixed;inset:0;background:rgba(22,48,46,0.45);z-index:50;display:flex;align-items:flex-end;justify-content:center;}
+  .sheet{
+    background:var(--paper);width:100%;max-width:480px;border-radius:20px 20px 0 0;
+    max-height:88vh;overflow-y:auto;padding-bottom:24px;
+    animation:slideup 0.22s ease;
+  }
+  @keyframes slideup{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .sheet-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 10px;position:sticky;top:0;background:var(--paper);}
+  .sheet-head h3{font-size:18px;}
+  .sheet-close{background:var(--paper-2);border:none;width:30px;height:30px;border-radius:50%;font-size:16px;}
+  .sheet-body{padding:4px 20px 12px;}
+
+  /* segmented control for priority */
+  .seg{display:flex;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;}
+  .seg button{flex:1;padding:10px 6px;background:var(--white);border:none;font-size:12.5px;font-weight:600;color:var(--muted);border-right:1.5px solid var(--line);}
+  .seg button:last-child{border-right:none;}
+  .seg button.active.must{background:var(--coral);color:#fff;}
+  .seg button.active.want{background:var(--teal);color:#fff;}
+  .seg button.active.no{background:var(--muted);color:#fff;}
+
+  /* AI banner */
+  .ai-banner{
+    margin:16px 20px 4px;padding:16px;border-radius:14px;
+    background:var(--ink);color:var(--white);
+  }
+  .ai-banner .lbl{font-size:11px;font-family:'IBM Plex Mono',monospace;color:#9FD8CF;letter-spacing:0.02em;margin-bottom:6px;}
+  .ai-banner p{font-size:13px;line-height:1.55;margin:0 0 12px;color:#E9E2D2;}
+  .ai-chat-box{display:flex;gap:8px;margin-top:6px;}
+  .ai-chat-box input{flex:1;padding:11px 13px;border-radius:11px;border:none;font-size:13.5px;}
+  .ai-chat-box button{background:var(--coral);color:#fff;border:none;border-radius:11px;padding:0 16px;font-weight:700;font-size:13px;}
+
+  .toast{
+    position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:var(--white);padding:12px 20px;border-radius:12px;
+    font-size:13.5px;z-index:100;box-shadow:0 8px 20px rgba(0,0,0,0.25);
+    max-width:90%;text-align:center;
+  }
+
+  .hidden{display:none !important;}
+  .center-col{display:flex;flex-direction:column;align-items:center;text-align:center;}
+  .invite-code{
+    font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;letter-spacing:0.12em;
+    background:var(--white);border:1.5px dashed var(--line);border-radius:14px;padding:16px 20px;margin:14px 0;
+  }
+  .link-list{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+  .divider-label{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:18px 0;}
+  .divider-label::before, .divider-label::after{content:'';flex:1;height:1px;background:var(--line);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* =========================================================
+   TRIP BUDDY — MVP
+   Storage model (window.storage):
+   personal: "identity"          -> {id,name}
+   personal: "my-trip-ids"       -> [tripId,...]
+   shared:   "trip:{id}"         -> {id,name,destination,startDate,endDate,memberCount,createdAt,inviteCode}
+   shared:   "code:{code}"       -> tripId
+   shared:   "members:{id}"      -> [{id,name,budget}]
+   shared:   "wishes:{id}"       -> [{id,memberId,memberName,text,category,priority}]
+   shared:   "spots:{id}"        -> [{id,name,category,address,memo,addedBy,addedByName}]
+   shared:   "votes:{id}"        -> {spotId:[memberId,...]}
+   shared:   "schedule:{id}"     -> [{date,items:[{time,title,memo}]}]
+   shared:   "expenses:{id}"     -> [{id,title,amount,paidBy,participants:[memberId],category,date}]
+   ========================================================= */
+
+const state = { view: 'loading', tripId: null, tab: 'wishes', dayIndex: 0, identity: null };
+
+function uid(len=8){
+  const chars='abcdefghjkmnpqrstuvwxyz23456789';
+  let s='';for(let i=0;i<len;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+function inviteCodeGen(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s='';for(let i=0;i<6;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtDate(d){
+  if(!d) return '';
+  const dt = new Date(d+'T00:00:00');
+  return `${dt.getMonth()+1}/${dt.getDate()}`;
+}
+function fmtDateFull(d){
+  if(!d) return '';
+  const dt = new Date(d+'T00:00:00');
+  const wd = ['日','月','火','水','木','金','土'][dt.getDay()];
+  return `${dt.getMonth()+1}月${dt.getDate()}日(${wd})`;
+}
+function fmtYen(n){
+  return '¥' + Math.round(n).toLocaleString('ja-JP');
+}
+function daysBetween(start,end){
+  const s=new Date(start+'T00:00:00'), e=new Date(end+'T00:00:00');
+  const days=[];
+  let cur=new Date(s);
+  while(cur<=e){
+    days.push(cur.toISOString().slice(0,10));
+    cur.setDate(cur.getDate()+1);
+  }
+  return days;
+}
+function toast(msg, ms=2600){
+  const el = document.createElement('div');
+  el.className='toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), ms);
+}
+
+/* ---------- storage helpers ----------
+   ローカル版: ブラウザの localStorage にすべて保存します。
+   「shared」引数はチャット版との互換のために残していますが、
+   ローカル版ではこのブラウザの中だけに保存される点にご注意ください
+   （友達のパソコンとは自動的に共有されません）。
+------------------------------------------------------------- */
+async function sGet(key, shared=false){
+  try{
+    const raw = localStorage.getItem('tb:' + key);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+async function sSet(key, value, shared=false){
+  try{
+    localStorage.setItem('tb:' + key, JSON.stringify(value));
+    return true;
+  }catch(e){ console.error('storage set failed', key, e); toast('保存に失敗しました（ブラウザの容量制限の可能性があります）'); return false; }
+}
+
+/* ---------- API key (for optional AI features) ---------- */
+function getApiKey(){ return localStorage.getItem('tb:apiKey') || ''; }
+function setApiKey(k){ localStorage.setItem('tb:apiKey', k || ''); }
+
+/* ---------- identity ---------- */
+async function ensureIdentity(){
+  let id = await sGet('identity', false);
+  if(!id){
+    return null; // needs onboarding
+  }
+  state.identity = id;
+  return id;
+}
+
+/* ---------- Claude API ---------- */
+async function callClaude(system, userMsg){
+  const key = getApiKey();
+  if(!key){
+    const err = new Error('NO_API_KEY');
+    err.code = 'NO_API_KEY';
+    throw err;
+  }
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model:"claude-sonnet-4-6",
+      max_tokens: 3000,
+      system: system,
+      messages:[{role:"user", content:userMsg}]
+    })
+  });
+  const data = await res.json();
+  if(data.error){ throw new Error(data.error.message || 'AI呼び出しに失敗しました'); }
+  const text = (data.content||[]).map(b=>b.text||'').join('\n');
+  return text;
+}
+function extractJson(text){
+  let t = text.trim();
+  t = t.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  const first = t.indexOf('[') === -1 ? t.indexOf('{') : (t.indexOf('{') === -1 ? t.indexOf('[') : Math.min(t.indexOf('{'), t.indexOf('[')));
+  const lastCurly = t.lastIndexOf('}');
+  const lastBrak = t.lastIndexOf(']');
+  const last = Math.max(lastCurly, lastBrak);
+  if(first === -1 || last === -1) throw new Error('AIの応答を解析できませんでした');
+  return JSON.parse(t.slice(first, last+1));
+}
+
+/* ============================================================
+   ROUTER / RENDER
+   ============================================================ */
+const root = document.getElementById('app');
+
+async function boot(){
+  const id = await ensureIdentity();
+  if(!id){ state.view='onboarding'; render(); return; }
+  state.view='home'; render();
+}
+
+function render(){
+  if(state.view==='loading') return renderLoading();
+  if(state.view==='onboarding') return renderOnboarding();
+  if(state.view==='home') return renderHome();
+  if(state.view==='create') return renderCreateTrip();
+  if(state.view==='join') return renderJoin();
+  if(state.view==='trip') return renderTrip();
+}
+
+function renderLoading(){
+  root.innerHTML = `<div class="loading"><div class="spinner"></div><div>読み込み中…</div></div>`;
+}
+
+/* ---------------- Onboarding ---------------- */
+function renderOnboarding(){
+  root.innerHTML = `
+    <div class="screen">
+      <div class="content" style="padding-top:60px;">
+        <div class="center-col" style="margin-bottom:30px;">
+          <div style="font-size:44px;margin-bottom:10px;">🌴</div>
+          <h1 style="font-size:30px;">TRIP BUDDY</h1>
+          <p style="color:var(--muted);font-size:14px;margin-top:8px;">みんなの旅行を、AIでもっと楽しく、もっとラクに。</p>
+        </div>
+        <div class="field">
+          <label>あなたのニックネーム</label>
+          <input id="nick" type="text" placeholder="例: たろう" maxlength="14">
+        </div>
+        <button class="btn btn-primary" id="startBtn">はじめる</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('startBtn').onclick = async ()=>{
+    const nick = document.getElementById('nick').value.trim();
+    if(!nick){ toast('ニックネームを入力してください'); return; }
+    const identity = { id: uid(10), name: nick };
+    await sSet('identity', identity, false);
+    await sSet('my-trip-ids', [], false);
+    state.identity = identity;
+    state.view = 'home';
+    render();
+  };
+}
+
+/* ---------------- Home ---------------- */
+async function renderHome(){
+  root.innerHTML = `
+    <div class="appbar">
+      <div style="flex:1;">
+        <h2>旅行一覧</h2>
+        <div class="sub">${esc(state.identity.name)}さん、こんにちは</div>
+      </div>
+      <button class="back" id="settingsBtn" title="設定" style="margin-right:2px;">⚙️</button>
+      <button class="back" id="joinIconBtn" title="参加する">🔑</button>
+    </div>
+    <div class="screen"><div id="tripListWrap" class="content"></div></div>
+    <button class="fab" id="fabCreate">＋</button>
+  `;
+  document.getElementById('fabCreate').onclick = ()=>{ state.view='create'; render(); };
+  document.getElementById('joinIconBtn').onclick = ()=>{ state.view='join'; render(); };
+  document.getElementById('settingsBtn').onclick = ()=> openApiKeySheet();
+
+  const wrap = document.getElementById('tripListWrap');
+  wrap.innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+
+  const ids = (await sGet('my-trip-ids', false)) || [];
+  if(ids.length === 0){
+    wrap.innerHTML = `
+      <div class="empty">
+        <h3>まだ旅行がありません</h3>
+        <p>右下の「＋」で新しい旅行を作るか、招待コードで友達の旅行に参加しましょう。</p>
+        <button class="btn btn-secondary" id="joinBtnEmpty">招待コードで参加する</button>
+      </div>`;
+    document.getElementById('joinBtnEmpty').onclick = ()=>{ state.view='join'; render(); };
+    return;
+  }
+  const trips = (await Promise.all(ids.map(id=>sGet('trip:'+id, true)))).filter(Boolean);
+  trips.sort((a,b)=> (a.startDate||'').localeCompare(b.startDate||''));
+
+  if(trips.length===0){
+    wrap.innerHTML = `<div class="empty"><h3>旅行が見つかりませんでした</h3></div>`;
+    return;
+  }
+
+  let html='';
+  for(const t of trips){
+    const expenses = (await sGet('expenses:'+t.id, true)) || [];
+    const total = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+    html += `
+      <div class="ticket" data-id="${t.id}">
+        <div class="ticket-main">
+          <div class="ticket-dest">${esc(t.destination||'')}</div>
+          <div class="ticket-name">${esc(t.name)}</div>
+          <div class="ticket-dates mono">${fmtDate(t.startDate)} — ${fmtDate(t.endDate)}</div>
+        </div>
+        <div class="ticket-perf"></div>
+        <div class="ticket-foot">
+          <div class="members">👥 ${t.memberCount||1}人</div>
+          <div class="spend">${fmtYen(total)}</div>
+        </div>
+      </div>`;
+  }
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.ticket').forEach(el=>{
+    el.onclick = ()=>{ state.tripId = el.dataset.id; state.tab='wishes'; state.view='trip'; render(); };
+  });
+}
+
+/* ---------------- Create trip ---------------- */
+function renderCreateTrip(){
+  root.innerHTML = `
+    <div class="appbar">
+      <button class="back" id="backBtn">←</button>
+      <h2>旅行を作る</h2>
+    </div>
+    <div class="screen"><div class="content">
+      <div class="field"><label>旅行名</label><input id="f_name" placeholder="例: 沖縄旅行"></div>
+      <div class="field"><label>行き先</label><input id="f_dest" placeholder="例: 沖縄県"></div>
+      <div class="field-row">
+        <div class="field"><label>開始日</label><input id="f_start" type="date"></div>
+        <div class="field"><label>終了日</label><input id="f_end" type="date"></div>
+      </div>
+      <div class="field"><label>メンバー数（自分を含む）</label><input id="f_members" type="number" min="1" value="4"></div>
+      <button class="btn btn-primary" id="createBtn">旅行を作成</button>
+    </div></div>
+  `;
+  document.getElementById('backBtn').onclick = ()=>{ state.view='home'; render(); };
+  document.getElementById('createBtn').onclick = async (e)=>{
+    const name = document.getElementById('f_name').value.trim();
+    const dest = document.getElementById('f_dest').value.trim();
+    const start = document.getElementById('f_start').value;
+    const end = document.getElementById('f_end').value;
+    const members = parseInt(document.getElementById('f_members').value)||1;
+    if(!name || !dest || !start || !end){ toast('すべての項目を入力してください'); return; }
+    if(start > end){ toast('終了日は開始日より後にしてください'); return; }
+    e.target.disabled = true; e.target.textContent = '作成中…';
+
+    const tripId = uid(10);
+    const code = inviteCodeGen();
+    const trip = { id: tripId, name, destination: dest, startDate: start, endDate: end, memberCount: members, createdAt: Date.now(), inviteCode: code };
+
+    const ok1 = await sSet('trip:'+tripId, trip, true);
+    const ok2 = await sSet('code:'+code, tripId, true);
+    const ok3 = await sSet('members:'+tripId, [{id: state.identity.id, name: state.identity.name, budget:null, role:'admin'}], true);
+    await sSet('wishes:'+tripId, [], true);
+    await sSet('spots:'+tripId, [], true);
+    await sSet('votes:'+tripId, {}, true);
+    await sSet('schedule:'+tripId, [], true);
+    await sSet('expenses:'+tripId, [], true);
+
+    if(!ok1 || !ok2 || !ok3){ toast('作成に失敗しました。もう一度お試しください'); e.target.disabled=false; e.target.textContent='旅行を作成'; return; }
+
+    const myIds = (await sGet('my-trip-ids', false)) || [];
+    myIds.push(tripId);
+    await sSet('my-trip-ids', myIds, false);
+
+    state.tripId = tripId; state.tab='invite'; state.view='trip'; render();
+  };
+}
+
+/* ---------------- Join by code ---------------- */
+function renderJoin(){
+  root.innerHTML = `
+    <div class="appbar">
+      <button class="back" id="backBtn">←</button>
+      <h2>招待コードで参加</h2>
+    </div>
+    <div class="screen"><div class="content">
+      <p style="color:var(--muted);font-size:14px;line-height:1.6;margin-top:0;">友達からもらった6桁の招待コードを入力してください。</p>
+      <div class="field"><label>招待コード</label><input id="f_code" style="text-transform:uppercase;letter-spacing:0.1em;font-family:'IBM Plex Mono',monospace;font-size:18px;" placeholder="ABC123" maxlength="6"></div>
+      <button class="btn btn-primary" id="joinBtn">参加する</button>
+    </div></div>
+  `;
+  document.getElementById('backBtn').onclick = ()=>{ state.view='home'; render(); };
+  document.getElementById('joinBtn').onclick = async (e)=>{
+    const code = document.getElementById('f_code').value.trim().toUpperCase();
+    if(!code){ toast('招待コードを入力してください'); return; }
+    e.target.disabled = true; e.target.textContent = '確認中…';
+    const tripId = await sGet('code:'+code, true);
+    if(!tripId){ toast('招待コードが見つかりませんでした'); e.target.disabled=false; e.target.textContent='参加する'; return; }
+    const trip = await sGet('trip:'+tripId, true);
+    if(!trip){ toast('旅行データが見つかりませんでした'); e.target.disabled=false; e.target.textContent='参加する'; return; }
+
+    const members = (await sGet('members:'+tripId, true)) || [];
+    if(!members.find(m=>m.id===state.identity.id)){
+      members.push({ id: state.identity.id, name: state.identity.name, budget:null, role:'member' });
+      await sSet('members:'+tripId, members, true);
+    }
+    const myIds = (await sGet('my-trip-ids', false)) || [];
+    if(!myIds.includes(tripId)){ myIds.push(tripId); await sSet('my-trip-ids', myIds, false); }
+
+    toast(`「${trip.name}」に参加しました`);
+    state.tripId = tripId; state.tab='wishes'; state.view='trip'; render();
+  };
+}
+
+/* ---------------- Trip detail (tabbed) ---------------- */
+async function renderTrip(){
+  const trip = await sGet('trip:'+state.tripId, true);
+  if(!trip){ state.view='home'; render(); return; }
+
+  const tabs = [
+    ['wishes','希望・投票'],
+    ['timeline','タイムライン'],
+    ['money','お金'],
+    ['members','メンバー'],
+    ['invite','招待'],
+  ];
+  root.innerHTML = `
+    <div class="appbar">
+      <button class="back" id="backBtn">←</button>
+      <div style="flex:1;">
+        <h2>${esc(trip.name)}</h2>
+        <div class="sub">${esc(trip.destination)} ・ ${fmtDate(trip.startDate)}〜${fmtDate(trip.endDate)}</div>
+      </div>
+    </div>
+    <div class="tabs">
+      ${tabs.map(([k,label])=>`<button class="tab ${state.tab===k?'active':''}" data-tab="${k}">${label}</button>`).join('')}
+    </div>
+    <div class="screen"><div id="tabContent"></div></div>
+  `;
+  document.getElementById('backBtn').onclick = ()=>{ state.view='home'; render(); };
+  root.querySelectorAll('.tab').forEach(btn=>{
+    btn.onclick = ()=>{ state.tab = btn.dataset.tab; render(); };
+  });
+
+  const content = document.getElementById('tabContent');
+  content.innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+
+  if(state.tab==='wishes') await renderWishesTab(trip, content);
+  else if(state.tab==='timeline') await renderTimelineTab(trip, content);
+  else if(state.tab==='money') await renderMoneyTab(trip, content);
+  else if(state.tab==='members') await renderMembersTab(trip, content);
+  else if(state.tab==='invite') await renderInviteTab(trip, content);
+}
+
+/* ---- Wishes & Spots & Voting tab ---- */
+async function renderWishesTab(trip, content){
+  const [members, wishes, spots, votes] = await Promise.all([
+    sGet('members:'+trip.id, true), sGet('wishes:'+trip.id, true),
+    sGet('spots:'+trip.id, true), sGet('votes:'+trip.id, true)
+  ]);
+  const mList = members||[]; const wList = wishes||[]; const sList = spots||[]; const vMap = votes||{};
+  const catIcon = {place:'📍', food:'🍽', activity:'🎡'};
+
+  content.innerHTML = `
+    <div class="content" style="padding-bottom:6px;">
+      <div class="row-between" style="margin-bottom:10px;">
+        <h3 style="font-size:16px;">みんなの希望</h3>
+        <button class="btn-ghost" id="addWishBtn">＋ 希望を追加</button>
+      </div>
+      <div class="card" id="wishList" style="padding:4px 16px;">
+        ${wList.length===0 ? `<div style="padding:16px 0;color:var(--muted);font-size:13.5px;">まだ希望が登録されていません。行きたい場所や食べたいものを追加してみましょう。</div>` :
+          wList.map(w=>`
+            <div class="wish-item">
+              <div>
+                <div class="wish-text">${catIcon[w.category]||'💭'} ${esc(w.text)}</div>
+                <div class="wish-by">${esc(w.memberName)}</div>
+              </div>
+              <span class="chip ${w.priority}">${w.priority==='must'?'絶対行きたい':w.priority==='want'?'できれば':'行きたくない'}</span>
+            </div>
+          `).join('')}
+      </div>
+
+      <div class="row-between" style="margin:22px 0 10px;">
+        <h3 style="font-size:16px;">候補スポット・投票</h3>
+        <button class="btn-ghost" id="addSpotBtn">＋ スポット追加</button>
+      </div>
+      <div id="spotList">
+        ${sList.length===0 ? `<div class="card" style="color:var(--muted);font-size:13.5px;">まだ候補スポットがありません。行きたい場所を追加して、みんなで投票しましょう。</div>` :
+          sList.map(s=>{
+            const voters = vMap[s.id]||[];
+            const iVoted = voters.includes(state.identity.id);
+            return `
+            <div class="card spot-card" data-spot="${s.id}">
+              <div>
+                <div class="spot-name">${esc(s.name)}</div>
+                <div class="spot-meta">${esc(s.address||'')}${s.memo?' ・ '+esc(s.memo):''}</div>
+                <span class="spot-cat">${esc(s.category||'その他')}</span>
+                <div class="spot-meta" style="margin-top:6px;">追加: ${esc(s.addedByName)}</div>
+              </div>
+              <button class="vote-btn ${iVoted?'voted':''}" data-spot-vote="${s.id}">
+                <span class="vote-heart">${iVoted?'❤️':'🤍'}</span>
+                <span class="vote-count">${voters.length}</span>
+              </button>
+            </div>`;
+          }).join('')}
+      </div>
+
+      <div class="ai-banner" style="margin:22px 0 8px;margin-left:0;margin-right:0;">
+        <div class="lbl">AI 旅行プラン作成</div>
+        <p>登録された希望・候補スポットの投票結果をもとに、AIが1日ごとの旅行スケジュールを提案します。※ご自身のAPIキー設定が必要です（未設定の場合はボタンを押すと設定画面が開きます）</p>
+        <button class="btn btn-primary" id="genPlanBtn" ${sList.length===0 ? 'disabled' : ''}>AIにプランを作ってもらう</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('addWishBtn').onclick = ()=> openWishSheet(trip, mList);
+  document.getElementById('addSpotBtn').onclick = ()=> openSpotSheet(trip);
+  content.querySelectorAll('[data-spot-vote]').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const spotId = btn.dataset.spotVote;
+      const votes2 = (await sGet('votes:'+trip.id, true)) || {};
+      const arr = votes2[spotId] || [];
+      const idx = arr.indexOf(state.identity.id);
+      if(idx>-1) arr.splice(idx,1); else arr.push(state.identity.id);
+      votes2[spotId] = arr;
+      await sSet('votes:'+trip.id, votes2, true);
+      renderWishesTab(trip, content);
+    };
+  });
+  document.getElementById('genPlanBtn').onclick = ()=> generateAIPlan(trip);
+}
+
+function openSheet(title, bodyHtml){
+  const backdrop = document.createElement('div');
+  backdrop.className='sheet-backdrop';
+  backdrop.innerHTML = `
+    <div class="sheet">
+      <div class="sheet-head"><h3>${esc(title)}</h3><button class="sheet-close">✕</button></div>
+      <div class="sheet-body">${bodyHtml}</div>
+    </div>`;
+  document.body.appendChild(backdrop);
+  backdrop.querySelector('.sheet-close').onclick = ()=> backdrop.remove();
+  backdrop.onclick = (e)=>{ if(e.target===backdrop) backdrop.remove(); };
+  return backdrop;
+}
+
+function openWishSheet(trip, members){
+  const sheet = openSheet('希望を追加', `
+    <div class="field"><label>内容</label><textarea id="w_text" rows="2" placeholder="例: 美ら海水族館に行きたい / 沖縄そばが食べたい"></textarea></div>
+    <div class="field">
+      <label>カテゴリ</label>
+      <select id="w_cat"><option value="place">📍 行きたい場所</option><option value="food">🍽 食べたいもの</option><option value="activity">🎡 やりたいこと</option></select>
+    </div>
+    <div class="field">
+      <label>優先度</label>
+      <div class="seg" id="w_prio">
+        <button data-v="must" class="must">絶対行きたい</button>
+        <button data-v="want" class="want active">できれば</button>
+        <button data-v="no" class="no">行きたくない</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="saveWishBtn" style="margin-top:6px;">追加する</button>
+  `);
+  let prio = 'want';
+  sheet.querySelectorAll('#w_prio button').forEach(b=>{
+    b.onclick = ()=>{ prio=b.dataset.v; sheet.querySelectorAll('#w_prio button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); };
+  });
+  sheet.querySelector('#saveWishBtn').onclick = async ()=>{
+    const text = sheet.querySelector('#w_text').value.trim();
+    const cat = sheet.querySelector('#w_cat').value;
+    if(!text){ toast('内容を入力してください'); return; }
+    const wishes = (await sGet('wishes:'+trip.id, true)) || [];
+    wishes.push({ id: uid(8), memberId: state.identity.id, memberName: state.identity.name, text, category: cat, priority: prio });
+    await sSet('wishes:'+trip.id, wishes, true);
+    sheet.remove();
+    render();
+  };
+}
+
+function openSpotSheet(trip){
+  const sheet = openSheet('候補スポットを追加', `
+    <div class="field"><label>スポット名</label><input id="s_name" placeholder="例: 美ら海水族館"></div>
+    <div class="field">
+      <label>カテゴリ</label>
+      <select id="s_cat"><option>観光</option><option>グルメ</option><option>ショッピング</option><option>自然</option><option>体験</option><option>その他</option></select>
+    </div>
+    <div class="field"><label>住所（任意）</label><input id="s_addr" placeholder="例: 沖縄県国頭郡本部町"></div>
+    <div class="field"><label>メモ（任意）</label><input id="s_memo" placeholder="例: 予約が必要かも"></div>
+    <button class="btn btn-primary" id="saveSpotBtn" style="margin-top:6px;">追加する</button>
+  `);
+  sheet.querySelector('#saveSpotBtn').onclick = async ()=>{
+    const name = sheet.querySelector('#s_name').value.trim();
+    if(!name){ toast('スポット名を入力してください'); return; }
+    const spots = (await sGet('spots:'+trip.id, true)) || [];
+    spots.push({
+      id: uid(8), name,
+      category: sheet.querySelector('#s_cat').value,
+      address: sheet.querySelector('#s_addr').value.trim(),
+      memo: sheet.querySelector('#s_memo').value.trim(),
+      addedBy: state.identity.id, addedByName: state.identity.name
+    });
+    await sSet('spots:'+trip.id, spots, true);
+    sheet.remove();
+    render();
+  };
+}
+
+/* ---- AI plan generation ---- */
+async function generateAIPlan(trip){
+  const btn = document.getElementById('genPlanBtn');
+  const original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'AIがプランを作成中…';
+
+  try{
+    const [members, wishes, spots, votes] = await Promise.all([
+      sGet('members:'+trip.id, true), sGet('wishes:'+trip.id, true),
+      sGet('spots:'+trip.id, true), sGet('votes:'+trip.id, true)
+    ]);
+    const days = daysBetween(trip.startDate, trip.endDate);
+    const voteSummary = (spots||[]).map(s=>({ name:s.name, category:s.category, address:s.address, memo:s.memo, votes:(votes[s.id]||[]).length })).sort((a,b)=>b.votes-a.votes);
+
+    const system = `あなたは友人グループ旅行の専属プランナーです。参加者全員の希望と投票結果を分析し、特定の誰か一人に偏らない、全員が最低ひとつは楽しめる現実的な旅行スケジュールを作成します。出力は必ず有効なJSON配列のみとし、説明文やコードフェンスは一切含めないでください。`;
+    const userMsg = `
+旅行名: ${trip.name}
+行き先: ${trip.destination}
+日程: ${days.join(', ')}(${days.length}日間)
+メンバー数: ${(members||[]).length}人
+
+メンバーの希望一覧:
+${(wishes||[]).map(w=>`- [${w.priority}] ${w.memberName}: ${w.text} (${w.category})`).join('\n') || '(なし)'}
+
+候補スポットと投票結果（票が多い順）:
+${voteSummary.map(s=>`- ${s.name} [${s.category}] 票数:${s.votes} ${s.address?('住所:'+s.address):''} ${s.memo?('メモ:'+s.memo):''}`).join('\n') || '(なし)'}
+
+上記日程ぶんの旅行スケジュールを作成してください。各日1つのオブジェクトとし、以下のJSON形式の配列のみを出力してください。
+[
+  {
+    "date": "YYYY-MM-DD",
+    "items": [
+      {"time": "09:00", "title": "予定タイトル", "memo": "補足説明（移動時間や注意点など、30文字程度）"}
+    ]
+  }
+]
+各日3〜6件程度の予定にし、食事の時間も含めてください。投票の多いスポットを優先しつつ、特定のメンバーの希望だけに偏らないようにしてください。`;
+
+    const text = await callClaude(system, userMsg);
+    const plan = extractJson(text);
+    if(!Array.isArray(plan)) throw new Error('AIの応答形式が不正です');
+    await sSet('schedule:'+trip.id, plan, true);
+    toast('AIがプランを作成しました');
+    state.tab='timeline';
+    render();
+  }catch(err){
+    console.error(err);
+    if(err.code === 'NO_API_KEY'){
+      openApiKeySheet();
+    }else{
+      toast('プラン作成に失敗しました: ' + (err.message||''));
+    }
+    btn.disabled=false; btn.textContent=original;
+  }
+}
+
+/* ---- Timeline tab ---- */
+async function renderTimelineTab(trip, content){
+  const schedule = (await sGet('schedule:'+trip.id, true)) || [];
+  const days = daysBetween(trip.startDate, trip.endDate);
+
+  if(schedule.length===0){
+    content.innerHTML = `
+      <div class="empty">
+        <h3>まだプランがありません</h3>
+        <p>「希望・投票」タブから、みんなの希望を集めてAIにプランを作ってもらいましょう。</p>
+        <button class="btn btn-secondary" id="goWishes">希望・投票タブへ</button>
+      </div>`;
+    document.getElementById('goWishes').onclick = ()=>{ state.tab='wishes'; render(); };
+    return;
+  }
+
+  if(state.dayIndex >= schedule.length) state.dayIndex = 0;
+  const cur = schedule[state.dayIndex] || schedule[0];
+
+  content.innerHTML = `
+    <div class="day-tabs">
+      ${schedule.map((d,i)=>`<button class="day-chip ${i===state.dayIndex?'active':''}" data-day="${i}">${fmtDate(d.date)}</button>`).join('')}
+    </div>
+    <div class="timeline" id="tlBody">
+      <div style="font-weight:600;font-size:15px;margin-bottom:14px;">${fmtDateFull(cur.date)}</div>
+      ${(cur.items||[]).length===0 ? '<div style="color:var(--muted);font-size:13.5px;">この日の予定はまだありません。</div>' :
+        cur.items.map((it,idx)=>`
+          <div class="tl-item">
+            <div class="tl-time mono">${esc(it.time||'')}</div>
+            <div class="tl-dot"></div>
+            <div class="tl-body">
+              <div class="tl-title">${esc(it.title||'')}</div>
+              ${it.memo?`<div class="tl-memo">${esc(it.memo)}</div>`:''}
+            </div>
+          </div>
+        `).join('')}
+      <button class="btn btn-outline btn-sm" id="addItemBtn" style="margin-top:8px;">＋ 予定を追加</button>
+    </div>
+    <div class="ai-banner">
+      <div class="lbl">AI 再プランニング</div>
+      <p>「雨だから予定を変更して」「移動時間を減らして」「もっと安いプランにして」のように、自然な言葉でプランの変更を指示できます。</p>
+      <div class="ai-chat-box">
+        <input id="aiInstruction" placeholder="例: 雨だから室内中心にして">
+        <button id="aiApplyBtn">送信</button>
+      </div>
+    </div>
+  `;
+
+  content.querySelectorAll('[data-day]').forEach(btn=>{
+    btn.onclick = ()=>{ state.dayIndex = parseInt(btn.dataset.day); renderTimelineTab(trip, content); };
+  });
+  document.getElementById('addItemBtn').onclick = ()=> openAddItemSheet(trip, schedule, state.dayIndex, content);
+  document.getElementById('aiApplyBtn').onclick = ()=> applyAIReplan(trip, schedule, content);
+  document.getElementById('aiInstruction').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter') applyAIReplan(trip, schedule, content);
+  });
+}
+
+function openAddItemSheet(trip, schedule, dayIdx, content){
+  const sheet = openSheet('予定を追加', `
+    <div class="field"><label>時刻</label><input id="i_time" type="time" value="12:00"></div>
+    <div class="field"><label>タイトル</label><input id="i_title" placeholder="例: ランチ"></div>
+    <div class="field"><label>メモ（任意）</label><input id="i_memo" placeholder="例: 予約済み"></div>
+    <button class="btn btn-primary" id="saveItemBtn" style="margin-top:6px;">追加する</button>
+  `);
+  sheet.querySelector('#saveItemBtn').onclick = async ()=>{
+    const time = sheet.querySelector('#i_time').value;
+    const title = sheet.querySelector('#i_title').value.trim();
+    const memo = sheet.querySelector('#i_memo').value.trim();
+    if(!title){ toast('タイトルを入力してください'); return; }
+    schedule[dayIdx].items = schedule[dayIdx].items || [];
+    schedule[dayIdx].items.push({time, title, memo});
+    schedule[dayIdx].items.sort((a,b)=> (a.time||'').localeCompare(b.time||''));
+    await sSet('schedule:'+trip.id, schedule, true);
+    sheet.remove();
+    renderTimelineTab(trip, content);
+  };
+}
+
+async function applyAIReplan(trip, schedule, content){
+  const input = document.getElementById('aiInstruction');
+  const instruction = input.value.trim();
+  if(!instruction){ toast('指示を入力してください'); return; }
+  const btn = document.getElementById('aiApplyBtn');
+  btn.disabled = true; btn.textContent = '処理中…';
+
+  try{
+    const system = `あなたは友人グループ旅行のプランナーです。現在の旅行スケジュール(JSON)と、ユーザーからの自然言語の変更指示を受け取り、指示を反映した新しいスケジュールをJSON配列のみで出力してください。説明文やコードフェンスは一切含めないでください。予定の日付の数や形式は変えないでください。`;
+    const userMsg = `現在のスケジュール:\n${JSON.stringify(schedule)}\n\n変更指示: 「${instruction}」\n\n変更後の全日程を、以下と同じJSON形式の配列で出力してください。\n[{"date":"YYYY-MM-DD","items":[{"time":"09:00","title":"...","memo":"..."}]}]`;
+
+    const text = await callClaude(system, userMsg);
+    const updated = extractJson(text);
+    if(!Array.isArray(updated)) throw new Error('AIの応答形式が不正です');
+    await sSet('schedule:'+trip.id, updated, true);
+    toast('プランを更新しました');
+    input.value='';
+    renderTimelineTab(trip, content);
+  }catch(err){
+    console.error(err);
+    if(err.code === 'NO_API_KEY'){
+      openApiKeySheet();
+    }else{
+      toast('変更に失敗しました: ' + (err.message||''));
+    }
+    btn.disabled=false; btn.textContent='送信';
+  }
+}
+
+/* ---- API key settings sheet ---- */
+function openApiKeySheet(){
+  const current = getApiKey();
+  const sheet = openSheet('AI機能を有効にする', `
+    <p style="color:var(--muted);font-size:13.5px;line-height:1.6;margin-top:0;">
+      AIプラン作成・AI再プランニングを使うには、ご自身のAnthropic APIキーが必要です（<span class="mono">console.anthropic.com</span> で発行・従量課金）。キーはこのブラウザにのみ保存され、外部には送信されません。
+    </p>
+    <div class="field"><label>APIキー</label><input id="apiKeyInput" type="password" placeholder="sk-ant-..." value="${esc(current)}"></div>
+    <button class="btn btn-primary" id="saveKeyBtn" style="margin-top:6px;">保存する</button>
+    ${current ? '<button class="btn btn-outline" id="clearKeyBtn" style="margin-top:10px;">キーを削除する</button>' : ''}
+  `);
+  sheet.querySelector('#saveKeyBtn').onclick = ()=>{
+    const val = sheet.querySelector('#apiKeyInput').value.trim();
+    if(!val){ toast('APIキーを入力してください'); return; }
+    setApiKey(val);
+    toast('APIキーを保存しました');
+    sheet.remove();
+  };
+  const clearBtn = sheet.querySelector('#clearKeyBtn');
+  if(clearBtn) clearBtn.onclick = ()=>{ setApiKey(''); toast('APIキーを削除しました'); sheet.remove(); };
+}
+
+/* ---- Money tab ---- */
+async function renderMoneyTab(trip, content){
+  const [members, expenses] = await Promise.all([sGet('members:'+trip.id, true), sGet('expenses:'+trip.id, true)]);
+  const mList = members||[]; const eList = expenses||[];
+  const total = eList.reduce((s,e)=>s+Number(e.amount||0),0);
+  const perPerson = mList.length ? total/mList.length : 0;
+
+  const catIcon = {'交通費':'✈️','宿泊':'🏨','食事':'🍽','レンタカー':'🚗','観光':'🎡','チケット':'🎫','買い物':'🛍','その他':'💰'};
+
+  // paid & owed per member
+  const paid = {}; const owed = {};
+  mList.forEach(m=>{paid[m.id]=0; owed[m.id]=0;});
+  eList.forEach(e=>{
+    paid[e.paidBy] = (paid[e.paidBy]||0) + Number(e.amount||0);
+    const parts = e.participants && e.participants.length ? e.participants : mList.map(m=>m.id);
+    const share = Number(e.amount||0) / parts.length;
+    parts.forEach(pid=>{ owed[pid] = (owed[pid]||0) + share; });
+  });
+  const diff = {};
+  mList.forEach(m=>{ diff[m.id] = (paid[m.id]||0) - (owed[m.id]||0); });
+
+  // settlement (simple greedy)
+  const creditors = mList.filter(m=>diff[m.id] > 0.5).map(m=>({id:m.id,name:m.name,amt:diff[m.id]})).sort((a,b)=>b.amt-a.amt);
+  const debtors = mList.filter(m=>diff[m.id] < -0.5).map(m=>({id:m.id,name:m.name,amt:-diff[m.id]})).sort((a,b)=>b.amt-a.amt);
+  const settlements = [];
+  let ci=0, di=0;
+  const cArr = creditors.map(c=>({...c})), dArr = debtors.map(d=>({...d}));
+  while(ci<cArr.length && di<dArr.length){
+    const pay = Math.min(cArr[ci].amt, dArr[di].amt);
+    if(pay > 0.5) settlements.push({from:dArr[di].name, to:cArr[ci].name, amt:pay});
+    cArr[ci].amt -= pay; dArr[di].amt -= pay;
+    if(cArr[ci].amt<=0.5) ci++;
+    if(dArr[di].amt<=0.5) di++;
+  }
+
+  content.innerHTML = `
+    <div class="money-summary">
+      <div class="money-box"><div class="label">総支出</div><div class="val">${fmtYen(total)}</div></div>
+      <div class="money-box"><div class="label">1人あたり</div><div class="val">${fmtYen(perPerson)}</div></div>
+    </div>
+    <div class="content" style="padding-top:16px;">
+      <div class="row-between" style="margin-bottom:10px;">
+        <h3 style="font-size:16px;">支出一覧</h3>
+        <button class="btn-ghost" id="addExpenseBtn">＋ 支出を追加</button>
+      </div>
+      <div class="card" style="padding:4px 16px;">
+        ${eList.length===0 ? `<div style="padding:16px 0;color:var(--muted);font-size:13.5px;">まだ支出が登録されていません。</div>` :
+          eList.slice().reverse().map(e=>{
+            const payer = mList.find(m=>m.id===e.paidBy);
+            return `
+            <div class="expense-row">
+              <div style="display:flex;gap:10px;align-items:center;">
+                <div class="expense-cat">${catIcon[e.category]||'💰'}</div>
+                <div>
+                  <div class="expense-title">${esc(e.title)}</div>
+                  <div class="expense-sub">${esc(payer?payer.name:'?')}が支払い ・ ${(e.participants||[]).length}人で割り勘</div>
+                </div>
+              </div>
+              <div class="expense-amt">${fmtYen(e.amount)}</div>
+            </div>`;
+          }).join('')}
+      </div>
+
+      <h3 style="font-size:16px;margin:22px 0 10px;">精算</h3>
+      <div class="card" style="padding:4px 16px;">
+        ${settlements.length===0 ? `<div style="padding:16px 0;color:var(--muted);font-size:13.5px;">${eList.length===0?'支出を登録すると精算額が計算されます。':'現在、精算の必要はありません。🎉'}</div>` :
+          settlements.map(s=>`
+            <div class="settle-row">
+              <div style="font-weight:600;font-size:14px;">${esc(s.from)}</div>
+              <div class="settle-arrow">→</div>
+              <div style="font-weight:600;font-size:14px;">${esc(s.to)}</div>
+              <div class="settle-amt">${fmtYen(s.amt)}</div>
+            </div>
+          `).join('')}
+      </div>
+    </div>
+  `;
+  document.getElementById('addExpenseBtn').onclick = ()=> openExpenseSheet(trip, mList, content);
+}
+
+function openExpenseSheet(trip, members, content){
+  const sheet = openSheet('支出を追加', `
+    <div class="field"><label>項目</label><input id="e_title" placeholder="例: 夜ご飯"></div>
+    <div class="field"><label>金額</label><input id="e_amount" type="number" placeholder="例: 20000"></div>
+    <div class="field">
+      <label>カテゴリ</label>
+      <select id="e_cat"><option>交通費</option><option>宿泊</option><option>食事</option><option>レンタカー</option><option>観光</option><option>チケット</option><option>買い物</option><option>その他</option></select>
+    </div>
+    <div class="field"><label>支払った人</label>
+      <select id="e_payer">${members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select>
+    </div>
+    <div class="field"><label>参加者（割り勘対象）</label>
+      <div id="e_parts">${members.map(m=>`
+        <label style="display:flex;align-items:center;gap:8px;padding:8px 0;font-size:14px;">
+          <input type="checkbox" value="${m.id}" checked style="width:auto;"> ${esc(m.name)}
+        </label>`).join('')}
+      </div>
+    </div>
+    <button class="btn btn-primary" id="saveExpenseBtn" style="margin-top:6px;">追加する</button>
+  `);
+  sheet.querySelector('#saveExpenseBtn').onclick = async ()=>{
+    const title = sheet.querySelector('#e_title').value.trim();
+    const amount = parseFloat(sheet.querySelector('#e_amount').value);
+    const category = sheet.querySelector('#e_cat').value;
+    const paidBy = sheet.querySelector('#e_payer').value;
+    const participants = Array.from(sheet.querySelectorAll('#e_parts input:checked')).map(i=>i.value);
+    if(!title || !amount || amount<=0){ toast('項目と金額を正しく入力してください'); return; }
+    if(participants.length===0){ toast('参加者を1人以上選んでください'); return; }
+    const expenses = (await sGet('expenses:'+trip.id, true)) || [];
+    expenses.push({ id: uid(8), title, amount, paidBy, participants, category, date: new Date().toISOString().slice(0,10) });
+    await sSet('expenses:'+trip.id, expenses, true);
+    sheet.remove();
+    renderMoneyTab(trip, content);
+  };
+}
+
+/* ---- Members tab ---- */
+async function renderMembersTab(trip, content){
+  const [members, expenses] = await Promise.all([sGet('members:'+trip.id, true), sGet('expenses:'+trip.id, true)]);
+  const mList = members||[]; const eList = expenses||[];
+  const paid = {}; const owed = {};
+  mList.forEach(m=>{paid[m.id]=0; owed[m.id]=0;});
+  eList.forEach(e=>{
+    paid[e.paidBy] = (paid[e.paidBy]||0) + Number(e.amount||0);
+    const parts = e.participants && e.participants.length ? e.participants : mList.map(m=>m.id);
+    const share = Number(e.amount||0) / parts.length;
+    parts.forEach(pid=>{ owed[pid] = (owed[pid]||0) + share; });
+  });
+
+  content.innerHTML = `
+    <div class="content">
+      <div class="card" style="padding:4px 16px;">
+        ${mList.map(m=>{
+          const d = (paid[m.id]||0) - (owed[m.id]||0);
+          return `
+          <div class="member-row">
+            <div class="avatar">${esc(m.name.slice(0,1))}</div>
+            <div>
+              <div class="member-name">${esc(m.name)}</div>
+              <div class="member-role">${m.role==='admin'?'管理者':'メンバー'}</div>
+            </div>
+            <div class="member-money ${d>=0?'money-plus':'money-minus'}">${d>=0?'+':''}${fmtYen(d)}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ---- Invite tab ---- */
+async function renderInviteTab(trip, content){
+  const shareText = `TRIP BUDDYで「${trip.name}」の計画を一緒に作ろう！\n招待コード: ${trip.inviteCode}`;
+  const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(shareText)}`;
+  content.innerHTML = `
+    <div class="content center-col">
+      <h3 style="font-size:17px;margin-top:10px;">友達を招待する</h3>
+      <p style="color:var(--muted);font-size:13.5px;margin-top:6px;">この6桁のコードを友達に共有してください。友達はホーム画面の🔑ボタンから参加できます。<br><br>※このローカル版では、データはあなたのブラウザ内だけに保存されます。友達が実際に同じ旅行データを見るには、後日オンライン版（バックエンド）への移行が必要です。</p>
+      <div class="invite-code mono">${esc(trip.inviteCode)}</div>
+      <div class="link-list" style="width:100%;">
+        <button class="btn btn-secondary" id="copyCodeBtn">コードをコピー</button>
+        <a class="btn btn-outline" href="${lineUrl}" target="_blank" rel="noopener" style="text-decoration:none;display:flex;">LINEで共有</a>
+      </div>
+    </div>
+  `;
+  document.getElementById('copyCodeBtn').onclick = async ()=>{
+    try{
+      await navigator.clipboard.writeText(shareText);
+      toast('コピーしました');
+    }catch(e){ toast('コピーできませんでした。手動でコードを共有してください'); }
+  };
+}
+
+boot();
+</script>
+</body>
+</html>
